@@ -182,11 +182,14 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
             for line in bin_mask:
                 gofnt_matrix[i, :] += gofnt_prefactor * \
                     ion.Emiss['emiss'][line]
-        cont = ch.continuum(ion_str, temp, abundance=abund_file)
-        cont.freeFree(wave_arr)
-        cont.freeBound(wave_arr)
-        gofnt_matrix += cont.FreeFree['intensity'].T
-        gofnt_matrix += cont.FreeBound['intensity'].T
+        try:
+            cont = ch.continuum(ion_str, temp, abundance=abund_file)
+            cont.freeFree(wave_arr)
+            cont.freeBound(wave_arr)
+            gofnt_matrix += cont.FreeFree['intensity'].T
+            gofnt_matrix += cont.FreeBound['intensity'].T
+        except AttributeError:
+            print('Continuum failed for ', ion_str)
     return gofnt_matrix
 
 
