@@ -162,8 +162,7 @@ def generate_standard_gofnt_library_pressure(save_loc=''):
 
     logtemp_min = 4.0
     logtemp_max = 8
-    spacing = 500
-    n_points = spacing * (logtemp_max - logtemp_min)
+    n_points = 2000
 
     press_list = [1e16, 1e17, 1e18, 1e19, 1e13, 1e14, 1e15, ]
     temp = np.logspace(logtemp_min, logtemp_max, n_points)
