@@ -174,7 +174,9 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
         gofnt_prefactor = ion.Abundance * ion.IoneqOne / ion.EDensity
         ion.twoPhoton(wave_arr)
         if 'intensity' in ion.TwoPhoton.keys():
-            gofnt_matrix += ion.TwoPhoton['intensity'].T
+            twophot_contrib = (ion.TwoPhoton['intensity'].T * bin_arr)
+            tp_mask = np.where(np.isfinite(twophot_contrib))
+            gofnt_matrix[tp_mask] += twophot_contrib[tp_mask]
         if ion.Z > 2.0:
             gofnt_prefactor *= 10.0**abundance
         for i in range(0, len(wave_arr)):
