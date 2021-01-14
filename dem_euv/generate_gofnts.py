@@ -187,6 +187,70 @@ def generate_standard_gofnt_library_pressure(save_loc=''):
                                      '4', '8', press, save_loc)
 
 
+def generate_specific_gofnt_library_pressure(star_name,
+                                             abund_file, press_list,
+                                             save_loc='', abundance=0.0):
+    wave_min = 1.0
+    wave_max = 2000.0
+
+    const_r = 500.0
+
+    logtemp_min = 4.0
+    logtemp_max = 8
+    n_points = 2000
+    temp = np.logspace(logtemp_min, logtemp_max, n_points)
+
+    wave_arr, bin_arr = generate_constant_R_wave_arr(wave_min, wave_max,
+                                                     const_r)
+    gofnt_str = 'gofnt_'
+    gofnt_str += 'w' + str(int(wave_min)) + '_'
+    gofnt_str += 'w' + str(int(wave_max)) + '_'
+    gofnt_str += 't' + str(int(logtemp_min)) + '_'
+    gofnt_str += 't' + str(int(logtemp_max)) + '_'
+    gofnt_str += 'r' + str(int(const_r)) + '_'
+    if save_loc != '':
+        os.makedirs(save_loc, exist_ok=True)
+    wave_lows = wave_arr - (0.5 * bin_arr)
+    wave_upps = wave_lows + bin_arr
+    for press in press_list:
+        dens = press / temp
+        ions = masterListRead()
+        temp_str = gofnt_str + 'p' + str(int(np.log10(press))) + '_'
+        temp_str += star_name + '.npy'
+        print(ions)
+        print('Generating: ', temp_str)
+        gofnt = get_gofnt_matrix_low_ram(ions, wave_lows, wave_upps,
+                                         temp, dens, abund_file, abundance)
+        np.save(save_loc + temp_str, gofnt)
+
+
 if __name__ == '__main__':
     save_loc = '../../gofnt_dir/'
-    generate_standard_gofnt_library_pressure(save_loc)
+    press_list_1 = [1e16, 1e17, 1e18, 1e19, 1e20, 1e15]
+    press_list_2 = [1e13, 1e14, 1e21, 1e22]
+    abund_file_au_mic = 'au_mic_coronal'
+    abund_file_sol = 'sun_coronal_2012_schmelz_ext'
+    generate_specific_gofnt_library_pressure('au_mic',
+                                             abund_file_au_mic,
+                                             press_list_1, save_loc, 0.0)
+    generate_specific_gofnt_library_pressure('sol0',
+                                             abund_file_sol,
+                                             press_list_1, save_loc, 0.0)
+    generate_specific_gofnt_library_pressure('au_mic',
+                                             abund_file_au_mic,
+                                             press_list_2, save_loc, 0.0)
+    generate_specific_gofnt_library_pressure('sup1',
+                                             abund_file_sol,
+                                             press_list_1, save_loc, 1.0)
+    generate_specific_gofnt_library_pressure('sub1',
+                                             abund_file_sol,
+                                             press_list_1, save_loc, -1.0)
+    generate_specific_gofnt_library_pressure('sol0',
+                                             abund_file_sol,
+                                             press_list_2, save_loc, 0.0)
+    generate_specific_gofnt_library_pressure('sup1',
+                                             abund_file_sol,
+                                             press_list_2, save_loc, 1.0)
+    generate_specific_gofnt_library_pressure('sub1',
+                                             abund_file_sol,
+                                             press_list_2, save_loc, -1.0)
