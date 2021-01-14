@@ -186,9 +186,11 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
             cont = ch.continuum(ion_str, temp, abundance=abund_file)
             cont.freeFree(wave_arr)
             cont.freeBound(wave_arr)
-            gofnt_matrix += cont.FreeFree['intensity'].T
-            gofnt_matrix += cont.FreeBound['intensity'].T
-        except AttributeError:
+            if 'intensity' in cont.FreeFree.keys():
+                gofnt_matrix += cont.FreeFree['intensity'].T
+            if 'intensity' in cont.FreeBound.keys():
+                gofnt_matrix += cont.FreeBound['intensity'].T
+        except (AttributeError):
             print('Continuum failed for ', ion_str)
     return gofnt_matrix
 
