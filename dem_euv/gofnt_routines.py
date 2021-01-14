@@ -174,7 +174,8 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
         gofnt_prefactor = ion.Abundance * ion.IoneqOne / ion.EDensity
         ion.twoPhoton(wave_arr)
         if 'intensity' in ion.TwoPhoton.keys():
-            twophot_contrib = (ion.TwoPhoton['intensity'].T * bin_arr)
+            twophot_contrib = ion.TwoPhoton['intensity'].T
+            twophot_contrib *= bin_arr.reshape((bin_arr.size, 1))
             tp_mask = np.where(np.isfinite(twophot_contrib))
             gofnt_matrix[tp_mask] += twophot_contrib[tp_mask]
         if ion.Z > 2.0:
@@ -192,13 +193,15 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
             cont.freeFree(wave_arr)
             cont.freeBound(wave_arr)
             if 'intensity' in cont.FreeFree.keys():
-                freefree_contrib = cont.FreeFree['intensity'].T * bin_arr
+                freefree_contrib = cont.FreeFree['intensity'].T
+                freefree_contrib *= bin_arr.reshape((bin_arr.size, 1))
                 ff_mask = np.where(np.isfinite(freefree_contrib))
                 gofnt_matrix[ff_mask] += freefree_contrib[ff_mask]
             else:
                 print('No FreeFree intensity calculated for ',  ion_str)
             if 'intensity' in cont.FreeBound.keys():
-                freebound_contrib = cont.FreeBound['intensity'].T * bin_arr
+                freebound_contrib = cont.FreeBound['intensity'].T
+                freebound_contrib *= bin_arr.reshape((bin_arr.size, 1))
                 fb_mask = np.where(np.isfinite(freebound_contrib))
                 gofnt_matrix[fb_mask] += freebound_contrib[fb_mask]
             else:
