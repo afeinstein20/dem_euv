@@ -166,6 +166,7 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
     gofnt_matrix = np.zeros((len(wave_arr), len(temp)))
 
     for ion_str in ion_strs:
+        print(ion_str)
         ion = initialize_ion(ch.ion(ion_str, temperature=temp,
                                     eDensity=dens, abundance=abund_file))
         gofnt_prefactor = ion.Abundance * ion.IoneqOne / ion.EDensity
@@ -187,9 +188,17 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
             cont.freeFree(wave_arr)
             cont.freeBound(wave_arr)
             if 'intensity' in cont.FreeFree.keys():
-                gofnt_matrix += cont.FreeFree['intensity'].T
+                freefree_contrib = cont.FreeFree['intensity'].T
+                ff_mask = np.where(np.isfinite(freefree_contrib))
+                gofnt_matrix[ff_mask] += freefree_contrib[ff_mask]
+            else:
+                print('No FreeFree intensity calculated for ',  ion_str)
             if 'intensity' in cont.FreeBound.keys():
-                gofnt_matrix += cont.FreeBound['intensity'].T
+                freebound_contrib = cont.FreeBound['intensity'].T
+                fb_mask = np.where(np.isfinite(freebound_contrib))
+                gofnt_matrix[fb_mask] += freebound_contrib[fb_mask]
+            else:
+                print('No FreeBound intensity calculated for ', ion_str)
         except (AttributeError):
             print('Continuum failed for ', ion_str)
     return gofnt_matrix
