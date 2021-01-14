@@ -31,10 +31,12 @@ def generate_gofnts_by_abundance(abundances, abund_strs, ions,
     gofnt_str += 'p' + str(int(np.log10(press))) + '_'
     if save_loc != '':
         os.makedirs(save_loc, exist_ok=True)
+    wave_lows = wave_arr - (0.5 * bin_arr)
+    wave_upps = wave_lows + bin_arr
     for abundance, abund_str in zip(abundances, abund_strs):
         temp_str = gofnt_str + abund_str + '.npy'
         print('Generating: ', temp_str)
-        gofnt = get_gofnt_matrix_low_ram(ions, wave_arr, bin_arr,
+        gofnt = get_gofnt_matrix_low_ram(ions, wave_lows, wave_upps,
                                          temp, dens, abund_file, abundance)
         np.save(save_loc + temp_str, gofnt)
 
