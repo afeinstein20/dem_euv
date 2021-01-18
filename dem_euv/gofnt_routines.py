@@ -166,18 +166,11 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
     gofnt_matrix = np.zeros((len(wave_lows), len(temp)))
     bin_arr = wave_upps - wave_lows
     wave_arr = wave_lows + (0.5 * bin_arr)
-
     for ion_str in ion_strs:
         print(ion_str)
         ion = initialize_ion(ch.ion(ion_str, temperature=temp,
                                     eDensity=dens, abundance=abund_file))
         gofnt_prefactor = ion.Abundance * ion.IoneqOne / ion.EDensity
-        ion.twoPhoton(wave_arr)
-        if 'intensity' in ion.TwoPhoton.keys():
-            twophot_contrib = ion.TwoPhoton['intensity'].T
-            twophot_contrib *= bin_arr.reshape((bin_arr.size, 1))
-            tp_mask = np.where(np.isfinite(twophot_contrib))
-            gofnt_matrix[tp_mask] += twophot_contrib[tp_mask]
         if ion.Z > 2.0:
             gofnt_prefactor *= 10.0**abundance
         for i in range(0, len(wave_arr)):
@@ -188,7 +181,22 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
             for line in bin_mask:
                 gofnt_matrix[i, :] += gofnt_prefactor * \
                     ion.Emiss['emiss'][line]
-        try:
+    for ion_str in ['h_1', 'h_2', 'he_1', 'he_2', 'he_3']:
+        print(ion_str)
+        if ion_str in ['h_2', 'he_3']:
+            pass
+        else:
+            ion = initialize_ion(ch.ion(ion_str, temperature=temp,
+                                        eDensity=dens, abundance=abund_file))
+            ion.twoPhoton(wave_arr)
+            if 'intensity' in ion.TwoPhoton.keys():
+                twophot_contrib = ion.TwoPhoton['intensity'].T
+                twophot_contrib *= bin_arr.reshape((bin_arr.size, 1))
+                tp_mask = np.where(np.isfinite(twophot_contrib))
+                gofnt_matrix[tp_mask] += twophot_contrib[tp_mask]
+            else:
+                print('2Photon failed for', ion_str)
+        if ion_str in ['h_2', 'he_2', 'he_3']:
             cont = ch.continuum(ion_str, temp, abundance=abund_file)
             cont.freeFree(wave_arr)
             cont.freeBound(wave_arr)
@@ -206,8 +214,8 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
                 gofnt_matrix[fb_mask] += freebound_contrib[fb_mask]
             else:
                 print('No FreeBound intensity calculated for ', ion_str)
-        except (AttributeError):
-            print('Continuum failed for ', ion_str)
+        else:
+            pass
     return gofnt_matrix
 
 

@@ -56,6 +56,12 @@ def generate_constant_R_wave_arr(start, end, R):
     return wave_arr[:i], bin_arr[:i]
 
 
+def generate_constant_bin_wave_arr(start, end, bin):
+    wave_arr = np.arange(start, end + bin, bin)
+    bin_arr = np.ones_like(wave_arr) * bin
+    return wave_arr, bin_arr
+
+
 def get_bin_integral(wave_arr: np.ndarray, flux_arr: np.ndarray,
                      err_arr: np.ndarray,
                      bin_width: float = 3.0,
