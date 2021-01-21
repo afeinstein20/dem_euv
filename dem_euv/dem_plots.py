@@ -4,6 +4,7 @@ import seaborn as sns
 import corner
 from typing import List, Callable, Any, Union, Tuple
 from numpy.polynomial.chebyshev import chebval
+from scipy.integrate import cumtrapz
 
 
 def plot_dem(samples, lnprob, flux_arr, gofnt_matrix,
@@ -20,23 +21,18 @@ def plot_dem(samples, lnprob, flux_arr, gofnt_matrix,
     psi_model = 10.0**chebval(shift_log_temp, samples[np.argmax(lnprob)])
     total_samples = np.random.choice(len(samples), sample_num)
     psi_ys = flux_arr / (flux_weighting * np.trapz(gofnt_matrix, temp))
-    temp_integrands = [(psi_model * gofnt)
-                       for gofnt in gofnt_matrix]
     temp_lows = np.min(temp) * np.ones((len(gofnt_matrix)))
     temp_upps = np.max(temp) * np.ones_like(temp_lows)
-    for i in range(len(gofnt_matrix)):
-        temp_integrand = temp_integrands[i]
-        temp_halfmax = 0.5 * np.max(temp_integrand)
-        if np.argmax(temp_integrand) > 0:
-            temp_diff_low = np.abs(temp_integrand[:np.argmax(temp_integrand)]
-                                   - temp_halfmax)
-            temp_diff_low_arg = np.argmin(temp_diff_low)
-            temp_lows[i] = temp[:np.argmax(temp_integrand)][temp_diff_low_arg]
-        if np.argmax(temp_integrand) < (len(temp) - 1):
-            temp_diff_upp = np.abs(temp_integrand[np.argmax(temp_integrand):]
-                                   - temp_halfmax)
-            temp_diff_upp_arg = np.argmin(temp_diff_upp)
-            temp_upps[i] = temp[np.argmax(temp_integrand):][temp_diff_upp_arg]
+    temp_lows = 1e4 * np.ones_like(psi_ys)
+    temp_upps = 1e8 * np.ones_like(temp_lows)
+    for i in range(len(flux_arr)):
+        gofnt_cumtrapz = cumtrapz(gofnt_matrix[i], temp)
+        low_index = np.argmin(
+            np.abs(gofnt_cumtrapz - (0.16 * gofnt_cumtrapz[-1])))
+        upp_index = np.argmin(
+            np.abs(gofnt_cumtrapz - (0.84 * gofnt_cumtrapz[-1])))
+        temp_lows[i] = temp[low_index + 1]
+        temp_upps[i] = temp[upp_index + 1]
     for i in range(0, sample_num):
         s = samples[total_samples[i]]
         temp_psi = 10.0**chebval(shift_log_temp, s)

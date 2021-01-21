@@ -6,7 +6,7 @@ import seaborn as sns
 import ChiantiPy.core as ch
 from gofnt_routines import get_gofnt_matrix_low_ram, initialize_ion
 from gofnt_routines import masterListRead
-from data_prep import generate_constant_bin_wave_arr
+from data_prep import generate_constant_R_wave_arr
 
 
 sns.set_context('paper')
@@ -19,7 +19,7 @@ def generate_gofnts_by_abundance(abundances, abund_strs, ions,
                                  wave_arr, bin_arr,
                                  wave_min, wave_max,
                                  logtemp_min, logtemp_max,
-                                 const_bin, temp, dens, abund_file,
+                                 const_R, temp, dens, abund_file,
                                  logtemp_min_str, logtemp_max_str, press,
                                  save_loc=''):
     gofnt_str = 'gofnt_'
@@ -27,7 +27,7 @@ def generate_gofnts_by_abundance(abundances, abund_strs, ions,
     gofnt_str += 'w' + str(int(wave_max))
     gofnt_str += 't' + logtemp_min_str + '_'
     gofnt_str += 't' + logtemp_max_str + '_'
-    gofnt_str += 'b' + str(int(const_bin)) + '_'
+    gofnt_str += 'r' + str(int(const_R)) + '_'
     gofnt_str += 'p' + str(int(np.log10(press))) + '_'
     if save_loc != '':
         os.makedirs(save_loc, exist_ok=True)
@@ -158,20 +158,20 @@ def get_ion_gofnt_matrices(ion_strs,
 
 def generate_standard_gofnt_library_pressure(save_loc=''):
     wave_min = 1.0
-    wave_max = 2000.0
+    wave_max = 1500.0
 
-    const_bin = 2.0
+    const_R = 100
 
     logtemp_min = 4.0
     logtemp_max = 8
     n_points = 2000
 
-    press_list = [1e16, 1e17, 1e18, 1e19, 1e13, 1e14, 1e15, ]
+    press_list = [1e15, 1e17, 1e16, 1e18, 1e19, 1e20, 1e13, 1e14, 1e15]
     temp = np.logspace(logtemp_min, logtemp_max, n_points)
     abund_file = 'sun_coronal_2012_schmelz_ext'
 
-    wave_arr, bin_arr = generate_constant_bin_wave_arr(wave_min, wave_max,
-                                                       const_bin)
+    wave_arr, bin_arr = generate_constant_R_wave_arr(wave_min, wave_max,
+                                                     const_R)
 
     abundances = [0.0, -1.0, 1.0]
     abund_strs = ['sol0', 'sub1', 'sup1']
@@ -183,7 +183,7 @@ def generate_standard_gofnt_library_pressure(save_loc=''):
                                      wave_arr, bin_arr,
                                      wave_min, wave_max,
                                      logtemp_min, logtemp_max,
-                                     const_bin, temp, dens, abund_file,
+                                     const_R, temp, dens, abund_file,
                                      '4', '8', press, save_loc)
 
 
@@ -191,23 +191,23 @@ def generate_specific_gofnt_library_pressure(star_name,
                                              abund_file, press_list,
                                              save_loc='', abundance=0.0):
     wave_min = 1.0
-    wave_max = 2000.0
+    wave_max = 1500.0
 
-    const_bin = 2.0
+    const_R = 100
 
     logtemp_min = 4.0
     logtemp_max = 8
     n_points = 2000
     temp = np.logspace(logtemp_min, logtemp_max, n_points)
 
-    wave_arr, bin_arr = generate_constant_bin_wave_arr(wave_min, wave_max,
-                                                       const_bin)
+    wave_arr, bin_arr = generate_constant_R_wave_arr(wave_min, wave_max,
+                                                     const_R)
     gofnt_str = 'gofnt_'
     gofnt_str += 'w' + str(int(wave_min)) + '_'
     gofnt_str += 'w' + str(int(wave_max)) + '_'
     gofnt_str += 't' + str(int(logtemp_min)) + '_'
     gofnt_str += 't' + str(int(logtemp_max)) + '_'
-    gofnt_str += 'b' + str(int(const_bin)) + '_'
+    gofnt_str += 'r' + str(int(const_R)) + '_'
     if save_loc != '':
         os.makedirs(save_loc, exist_ok=True)
     wave_lows = wave_arr - (0.5 * bin_arr)
@@ -226,9 +226,9 @@ def generate_specific_gofnt_library_pressure(star_name,
 
 if __name__ == '__main__':
     save_loc = '../../gofnt_dir/'
-    press_list_1 = [1e17, 1e19]
-    press_list_2 = [1e13, 1e14, 1e15, 1e16, 1e18, 1e20, 1e21, 1e22]
-    abund_file_au_mic = 'au_mic_coronal'
+    press_list_1 = [1e17, 1e15]
+    press_list_2 = [1e13, 1e14, 1e19, 1e16, 1e18, 1e20, 1e21, 1e22]
+    abund_file_au_mic = 'unity'
     abund_file_sol = 'sun_coronal_2012_schmelz_ext'
     generate_specific_gofnt_library_pressure('au_mic',
                                              abund_file_au_mic,
