@@ -18,7 +18,7 @@ plt.rc('text', usetex=True)
 def generate_gofnts_by_abundance(abundances, abund_strs, ions,
                                  wave_arr, bin_arr,
                                  wave_min, wave_max,
-                                 logtemp_min, logtemp_max,
+                                 logtemp_min, logtemp_max, n_tpoints,
                                  const_R, temp, dens, abund_file,
                                  logtemp_min_str, logtemp_max_str, press,
                                  save_loc=''):
@@ -27,6 +27,7 @@ def generate_gofnts_by_abundance(abundances, abund_strs, ions,
     gofnt_str += 'w' + str(int(wave_max))
     gofnt_str += 't' + logtemp_min_str + '_'
     gofnt_str += 't' + logtemp_max_str + '_'
+    gofnt_str += 'n' + str(n_tpoints) + '_'
     gofnt_str += 'r' + str(int(const_R)) + '_'
     gofnt_str += 'p' + str(int(np.log10(press))) + '_'
     if save_loc != '':
@@ -161,13 +162,13 @@ def generate_standard_gofnt_library_pressure(save_loc=''):
     wave_max = 1500.0
 
     const_R = 100
+    n_tpoints = 100
 
     logtemp_min = 4.0
     logtemp_max = 8
-    n_points = 2000
 
     press_list = [1e15, 1e17, 1e16, 1e18, 1e19, 1e20, 1e13, 1e14, 1e15]
-    temp = np.logspace(logtemp_min, logtemp_max, n_points)
+    temp = np.logspace(logtemp_min, logtemp_max, n_tpoints)
     abund_file = 'sun_coronal_2012_schmelz_ext'
 
     wave_arr, bin_arr = generate_constant_R_wave_arr(wave_min, wave_max,
@@ -182,7 +183,7 @@ def generate_standard_gofnt_library_pressure(save_loc=''):
         generate_gofnts_by_abundance(abundances, abund_strs, ions,
                                      wave_arr, bin_arr,
                                      wave_min, wave_max,
-                                     logtemp_min, logtemp_max,
+                                     logtemp_min, logtemp_max, n_tpoints,
                                      const_R, temp, dens, abund_file,
                                      '4', '8', press, save_loc)
 
@@ -194,11 +195,11 @@ def generate_specific_gofnt_library_pressure(star_name,
     wave_max = 1500.0
 
     const_R = 100
+    n_tpoints = 100
 
     logtemp_min = 4.0
     logtemp_max = 8
-    n_points = 2000
-    temp = np.logspace(logtemp_min, logtemp_max, n_points)
+    temp = np.logspace(logtemp_min, logtemp_max, n_tpoints)
 
     wave_arr, bin_arr = generate_constant_R_wave_arr(wave_min, wave_max,
                                                      const_R)
@@ -207,6 +208,7 @@ def generate_specific_gofnt_library_pressure(star_name,
     gofnt_str += 'w' + str(int(wave_max)) + '_'
     gofnt_str += 't' + str(int(logtemp_min)) + '_'
     gofnt_str += 't' + str(int(logtemp_max)) + '_'
+    gofnt_str += 'n' + str(n_tpoints) + '_'
     gofnt_str += 'r' + str(int(const_R)) + '_'
     if save_loc != '':
         os.makedirs(save_loc, exist_ok=True)
@@ -230,21 +232,9 @@ if __name__ == '__main__':
     press_list_2 = [1e13, 1e14, 1e19, 1e16, 1e18, 1e20, 1e21, 1e22]
     abund_file_au_mic = 'unity'
     abund_file_sol = 'sun_coronal_2012_schmelz_ext'
-    generate_specific_gofnt_library_pressure('au_mic',
-                                             abund_file_au_mic,
-                                             press_list_1, save_loc, 0.0)
     generate_specific_gofnt_library_pressure('sol0',
                                              abund_file_sol,
                                              press_list_1, save_loc, 0.0)
-    generate_specific_gofnt_library_pressure('au_mic',
-                                             abund_file_au_mic,
-                                             press_list_2, save_loc, 0.0)
-    generate_specific_gofnt_library_pressure('sup1',
-                                             abund_file_sol,
-                                             press_list_1, save_loc, 1.0)
-    generate_specific_gofnt_library_pressure('sub1',
-                                             abund_file_sol,
-                                             press_list_1, save_loc, -1.0)
     generate_specific_gofnt_library_pressure('sol0',
                                              abund_file_sol,
                                              press_list_2, save_loc, 0.0)
@@ -254,3 +244,9 @@ if __name__ == '__main__':
     generate_specific_gofnt_library_pressure('sub1',
                                              abund_file_sol,
                                              press_list_2, save_loc, -1.0)
+    generate_specific_gofnt_library_pressure('sup1',
+                                             abund_file_sol,
+                                             press_list_1, save_loc, 1.0)
+    generate_specific_gofnt_library_pressure('sub1',
+                                             abund_file_sol,
+                                             press_list_1, save_loc, -1.0)

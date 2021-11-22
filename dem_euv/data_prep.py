@@ -128,8 +128,8 @@ def do_threshold_mask(wave_arr, flux_arr, err_arr, threshold):
 def generate_spectrum_from_samples(save_name, samples, lnprob,
                                    gofnt_spectrum, flux_weighting,
                                    spectrum_wave_arr, spectrum_bin_arr,
-                                   sample_num=100000):
-    temp = np.logspace(4, 8, 2000)
+                                   sample_num=100000,
+                                   temp=np.logspace(4, 8, 100)):
     log_temp = np.log10(temp)
     shift_log_temp = log_temp - np.mean(log_temp)
     range_temp = (np.max(shift_log_temp) - np.min(shift_log_temp))

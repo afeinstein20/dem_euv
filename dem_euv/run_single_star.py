@@ -11,7 +11,7 @@ from gofnt_routines import parse_ascii_table_CHIANTI, resample_gofnt_matrix
 from gofnt_routines import generate_ion_gofnts
 from fitting import fit_emcee, ln_likelihood_dem
 from astropy.io import fits
-from dem_plots import plot_dem, display_fig
+from dem_plots import plot_dem, plot_spectrum, display_fig
 
 
 def generate_flux_weighting(star_name, star_dist, star_rad):
@@ -23,7 +23,7 @@ def generate_flux_weighting(star_name, star_dist, star_rad):
 
 def get_best_gofnt_matrix_press(abundance, press, abund_type):
     gofnt_dir = '../gofnt_dir/'
-    gofnt_root = 'gofnt_w1_w2000_t4_t8_b2_p'
+    gofnt_root = 'gofnt_w1_w2000_t4_t8_n100_p'
     gofnt_matrix = np.load(gofnt_dir + gofnt_root
                            + str(int(np.log10(press)))
                            + '_' + abund_type + '.npy')
@@ -50,10 +50,10 @@ def get_spectrum_data_gofnt(star_name, data_npy_file, gofnt_matrix):
     wave, wave_bins, flux, err = np.load(data_npy_file)
     flux *= wave_bins
     err *= wave_bins
-    wave_old, _ = generate_constant_bin_wave_arr(1, 2000, 2)
+    wave_old, _ = generate_constant_R_wave_arr(1, 1500, 150)
     gofnt_spectrum = resample_gofnt_matrix(gofnt_matrix, wave, wave_bins,
                                            wave_old)
-    temp = np.logspace(4, 8, 2000)
+    temp = np.logspace(4, 8, 100)
     gofnt_ints = np.trapz(gofnt_spectrum, temp)
     mask = np.where(gofnt_ints >=
                     (np.max(gofnt_ints) / 10))
@@ -70,7 +70,7 @@ def get_star_data_gofnt_press(star_name, abundance, press,
                               line_table_file=None, data_npy_file=None,
                               bin_width=1.0):
     big_gofnt = get_best_gofnt_matrix_press(abundance, press)
-    temp = np.logspace(4, 8, 2000)
+    temp = np.logspace(4, 8, 100)
     dens = press / temp
     if line_table_file is not None:
         if os.path.isfile('gofnt_lines_' + star_name + '.npy'):
@@ -127,7 +127,7 @@ def run_mcmc_single_star(init_pos, gofnt_matrix, flux, err, flux_weighting,
                          n_walkers=200, burn_in_steps=1000,
                          production_steps=8000, thread_num=8,
                          count_num=2000):
-    temp = np.logspace(4, 8, 2000)
+    temp = np.logspace(4, 8, 100)
     log_temp = np.log10(temp)
     samples, lnprob, sampler = fit_emcee(init_pos=init_pos,
                                          likelihood_func=ln_likelihood_dem,
@@ -147,7 +147,7 @@ def run_mcmc_single_star(init_pos, gofnt_matrix, flux, err, flux_weighting,
     return samples, lnprob, sampler
 
 
-def generate_au_mic_data_npy():
+def generate_spectrum_data_npy():
     xray_fits = fits.open('../data_rsync/au_mic_data/au_mic_mos.ftz')
     arf_fits = fits.open('../data_rsync/au_mic_data/au_mic_mos_arf.ftz')
 
@@ -207,16 +207,15 @@ def generate_au_mic_data_npy():
     xray_wave = xray_wave[xray_mask]
     xray_bins = np.diff(xray_wave)
     xray_bins = np.append(xray_bins[0], xray_bins)
-    np.save('au_mic_spectrum_data.npy',
+    np.save('spectrum_data.npy',
             [xray_wave, xray_bins,
              xray_flux, xray_err])
-    return 'au_mic_spectrum_data.npy'
+    return 'spectrum_data.npy'
 
 
 if __name__ == '__main__':
-    temp = np.logspace(4, 8, 2000)
+    temp = np.logspace(4, 8, 100)
     log_temp = np.log10(temp)
-    dens = 1e12
     star_name_root = 'au_mic'
     abundance = 0.0
     star_rad = 0.75 * u.Rsun
@@ -226,19 +225,18 @@ if __name__ == '__main__':
     init_pos = [22.49331207, -3.31678227, -0.49848262,
                 -1.27244452, -0.93897032, -0.67235648,
                 -0.08085897]
-    # dens_list = [1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17]
     press_list = [1e17, 1e25, 1e24, 1e23, 1e22, 1e21, 1e20, 1e19, 1e18,
                   1e16, 1e15, 1e12, 1e13, 1e14]
 
-    if os.path.isfile('au_mic_spectrum_data.npy'):
-        data_npy_file = 'au_mic_spectrum_data.npy'
+    if os.path.isfile('spectrum_data.npy'):
+        data_npy_file = 'spectrum_data.npy'
     else:
-        data_npy_file = generate_au_mic_data_npy()
+        data_npy_file = generate_spectrum_data_npy()
     line_table_file = 'au_mic_linetable.ascii'
     for press in press_list:
         star_name = star_name_root + '_p' + str(int(np.log10(press)))
         gofnt_all = get_best_gofnt_matrix_press(abundance, press)
-        wave_all, bin_all = generate_constant_bin_wave_arr(1, 2000, 2)
+        wave_all, bin_all = generate_constant_R_wave_arr(1, 1500, 100)
         if os.path.isfile('gofnt_' + star_name + '.npy'):
             gofnt_matrix = np.load('gofnt_' + star_name + '.npy')
             flux = np.load('flux_' + star_name + '.npy')
@@ -290,3 +288,10 @@ if __name__ == '__main__':
                                                                flux_weighting,
                                                                wave_all,
                                                                bin_all)
+        if os.path.isfile('spectrum_' + star_name + '.pdf'):
+            pass
+        else:
+            spec_fig = plot_spectrum('spectrum_' + star_name + '.fits')
+            spec_fig = display_fig(spec_fig, 'spectrum_' + star_name,
+                                   'DEM Output Spectrum',
+                                   mode='pdf')
