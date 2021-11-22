@@ -47,7 +47,7 @@ def get_line_data_gofnts(star_name, line_table_file, abundance,
 
 
 def get_spectrum_data_gofnt(star_name, data_npy_file, gofnt_matrix):
-    wave, wave_bins, flux, err = np.load(data_npy_file)
+    wave, wave_bins, flux, err = np.load(data_npy_file, allow_pickle=True)
     flux *= wave_bins
     err *= wave_bins
     wave_old, _ = generate_constant_R_wave_arr(1, 1500, 150)
