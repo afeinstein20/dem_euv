@@ -166,6 +166,7 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
     gofnt_matrix = np.zeros((len(wave_lows), len(temp)))
     bin_arr = wave_upps - wave_lows
     wave_arr = wave_lows + (0.5 * bin_arr)
+
     for ion_str in ion_strs:
         print(ion_str)
         ion = initialize_ion(ch.ion(ion_str, temperature=temp,
@@ -181,6 +182,7 @@ def get_gofnt_matrix_low_ram(ion_strs: List[Any],
             for line in bin_mask:
                 gofnt_matrix[i, :] += gofnt_prefactor * \
                     ion.Emiss['emiss'][line]
+
     for ion_str in ['h_1', 'h_2', 'he_1', 'he_2', 'he_3']:
         print(ion_str)
         if ion_str in ['h_2', 'he_3']:
