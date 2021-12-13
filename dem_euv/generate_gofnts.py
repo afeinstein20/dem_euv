@@ -4,9 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import ChiantiPy.core as ch
-from gofnt_routines import get_gofnt_matrix_low_ram, initialize_ion
-from gofnt_routines import masterListRead
-from data_prep import generate_constant_R_wave_arr
+
+from .gofnt_routines import get_gofnt_matrix_low_ram, initialize_ion
+from .gofnt_routines import masterListRead
+from .data_prep import generate_constant_R_wave_arr
 
 
 sns.set_context('paper')

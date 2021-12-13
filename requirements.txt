@@ -1,0 +1,10 @@
+nbsphinx
+ipykernel
+pylab
+astropy
+matplotlib
+numpy
+scipy
+seaborn
+ChiantiPy
+roman

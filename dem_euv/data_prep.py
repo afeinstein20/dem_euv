@@ -4,7 +4,8 @@ from astropy.table import Table
 from astropy import units as u
 from typing import Tuple
 from numpy.polynomial.chebyshev import chebval
-from gofnt_routines import do_gofnt_matrix_integral
+
+from .gofnt_routines import do_gofnt_matrix_integral
 
 
 def parse_ascii_table_CHIANTI(fname):

@@ -3,7 +3,7 @@ import emcee
 import multiprocessing
 from numpy.polynomial.chebyshev import chebval
 from typing import List, Callable, Any, Union
-from gofnt_routines import do_gofnt_matrix_integral
+from .gofnt_routines import do_gofnt_matrix_integral
 
 
 def ln_prior_cutoff_dem(params: List[float],

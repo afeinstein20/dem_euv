@@ -1,17 +1,18 @@
 import corner
-import resample
 import os.path
 import numpy as np
+from astropy.io import fits
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.table import Table
-from data_prep import generate_constant_bin_wave_arr
-from data_prep import generate_spectrum_from_samples
-from gofnt_routines import parse_ascii_table_CHIANTI, resample_gofnt_matrix
-from gofnt_routines import generate_ion_gofnts
-from fitting import fit_emcee, ln_likelihood_dem
-from astropy.io import fits
-from dem_plots import plot_dem, plot_spectrum, display_fig
+
+from .resample import bintoR
+from .data_prep import generate_constant_bin_wave_arr
+from .data_prep import generate_spectrum_from_samples
+from .gofnt_routines import parse_ascii_table_CHIANTI, resample_gofnt_matrix
+from .gofnt_routines import generate_ion_gofnts
+from .fitting import fit_emcee, ln_likelihood_dem
+from .dem_plots import plot_dem, plot_spectrum, display_fig
 
 
 def generate_flux_weighting(star_name, star_dist, star_rad):
@@ -190,10 +191,10 @@ def generate_spectrum_data_npy():
     xray_bins = np.append(xray_bins[0], xray_bins)
     xray_flux /= xray_bins
     xray_err /= xray_bins
-    _, xray_flux = resample.bintoR(xray_wave, xray_flux,
-                                   R=15)
-    xray_wave, xray_var = resample.bintoR(xray_wave,
-                                          xray_err**2, R=15)
+    _, xray_flux = bintoR(xray_wave, xray_flux,
+                          R=15)
+    xray_wave, xray_var = bintoR(xray_wave,
+                                 xray_err**2, R=15)
     xray_err = np.sqrt(xray_var)
 
     print('Resampled X-ray data to R=15')
