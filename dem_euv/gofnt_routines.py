@@ -5,6 +5,9 @@ from astropy.table import Table
 from ChiantiPy.tools.io import masterListRead
 from typing import List, Any
 
+__all__ = ['parse_ascii_table_CHIANTI', 'generate_ion_gofnts',
+           'initialize_ion', 'get_gofnt_matrix_low_ram',
+           'do_gofnt_matrix_integral', 'resample_gofnt_matrix']
 
 def parse_ascii_table_CHIANTI(fname):
     """Parses an astropy.ascii table with the columns

@@ -15,6 +15,12 @@ from .fitting import fit_emcee, ln_likelihood_dem
 from .dem_plots import plot_dem, plot_spectrum, display_fig
 
 
+__all__ = ['generate_flux_weighting', 'get_best_gofnt_matrix_press',
+           'get_line_data_gofnts', 'get_spectrum_data_gofnt',
+           'get_star_data_gofnt_press', 'run_mcmc_single_star',
+           'generate_spectrum_data_npy']
+
+
 def generate_flux_weighting(star_name, star_dist, star_rad):
     flux_weighting = ((np.pi * u.sr * (star_rad**2.0) *
                        (1.0 / (star_dist**2.0))).to(u.sr)).value

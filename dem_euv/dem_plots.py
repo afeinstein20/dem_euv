@@ -7,6 +7,7 @@ from numpy.polynomial.chebyshev import chebval
 from scipy.integrate import cumtrapz
 from astropy.io import fits
 
+__all__ = ['plot_dem', 'plot_spectrum', 'display_fig']
 
 def plot_dem(samples, lnprob, flux_arr, gofnt_matrix,
              log_temp, temp, flux_weighting,

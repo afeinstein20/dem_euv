@@ -6,6 +6,10 @@ import numpy as np
 import scipy.interpolate
 import matplotlib.pyplot as plt
 
+__all__ = ['binsizes', 'plotboxy', 'fluxconservingresample',
+	   'bintogrid', 'bintoR', 'testgrid', 'testR', 'testFCR',
+	   'test']
+
 def binsizes(x):
 	'''If x is an array of bin centers, calculate what their sizes are.
 		(assumes outermost bins are same size as their neighbors)'''

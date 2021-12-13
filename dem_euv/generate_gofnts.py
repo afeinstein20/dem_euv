@@ -9,12 +9,15 @@ from .gofnt_routines import get_gofnt_matrix_low_ram, initialize_ion
 from .gofnt_routines import masterListRead
 from .data_prep import generate_constant_R_wave_arr
 
-
 sns.set_context('paper')
 sns.set_style('ticks')
 plt.rc('font', family='serif')
 plt.rc('text', usetex=True)
 
+__all__ = ['generate_gofnts_by_abundance', 'visualize_gofnt',
+           'gofnt_heatmap_plot', 'get_ion_gofnt_matrices',
+           'generate_standard_gofnt_library_pressure',
+           'generate_specific_gofnt_library_pressure']
 
 def generate_gofnts_by_abundance(abundances, abund_strs, ions,
                                  wave_arr, bin_arr,
