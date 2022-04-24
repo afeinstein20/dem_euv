@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import ChiantiPy.core as ch
 
-from .gofnt_routines import get_gofnt_matrix_low_ram, initialize_ion
-from .gofnt_routines import masterListRead
-from .data_prep import generate_constant_R_wave_arr
+from gofnt_routines import get_gofnt_matrix_low_ram, initialize_ion
+from gofnt_routines import masterListRead
+from data_prep import generate_constant_R_wave_arr
 
 sns.set_context('paper')
 sns.set_style('ticks')
@@ -122,7 +122,7 @@ def get_ion_gofnt_matrices(ion_strs,
             pass
         else:
             os.mkdir(ion_dir_str)
-
+            
         if os.path.isfile(ion_gofnt_str):
             pass
         else:
@@ -136,7 +136,7 @@ def get_ion_gofnt_matrices(ion_strs,
                 wave_low = wave_arr[i] - 0.5 * bin_arr[i]
                 wave_high = wave_arr[i] + 0.5 * bin_arr[i]
                 bin_mask = np.where((ion.Emiss['wvl'] <= wave_high) & (
-                    ion.Emiss['wvl'] > wave_low))[0]
+                        ion.Emiss['wvl'] > wave_low))[0]
                 for line in bin_mask:
                     ion_gofnt_matrix[i, :] += gofnt_prefactor * \
                         ion.Emiss['emiss'][line]
@@ -158,6 +158,7 @@ def get_ion_gofnt_matrices(ion_strs,
             plt.title(title_str)
             plt.savefig(ion_gofnt_plot_str, dpi=500)
             plt.clf()
+
     return None
 
 

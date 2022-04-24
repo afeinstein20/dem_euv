@@ -4,7 +4,7 @@ import multiprocessing
 from numpy.polynomial.chebyshev import chebval
 from typing import List, Callable, Any, Union
 
-from .gofnt_routines import do_gofnt_matrix_integral
+from gofnt_routines import do_gofnt_matrix_integral
 
 
 __all__ = ['ln_prior_cutoff_dem', 'ln_prob_flux_sigma_dem',

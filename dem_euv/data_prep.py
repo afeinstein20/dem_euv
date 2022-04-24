@@ -5,7 +5,7 @@ from astropy import units as u
 from typing import Tuple
 from numpy.polynomial.chebyshev import chebval
 
-from .gofnt_routines import do_gofnt_matrix_integral
+from gofnt_routines import do_gofnt_matrix_integral
 
 
 __all__ = ['parse_ascii_table_CHIANTI', 'generate_constant_R_wave_arr', 

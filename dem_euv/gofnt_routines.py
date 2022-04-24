@@ -25,13 +25,13 @@ def parse_ascii_table_CHIANTI(fname):
     """
     old_table = Table.read(fname, format='ascii')
     ion_list = old_table['Ion']
-    split_ions = [ion_name.split() for ion_name in ion_list]
-    new_names = [split_ion[0].lower() + '_' +
-                 str(roman.fromRoman(split_ion[1][:-1]))
-                 if ']' in split_ion[1] else split_ion[0].lower() + '_'
-                 + str(roman.fromRoman(split_ion[1]))
-                 for split_ion in split_ions]
-    old_table['Ion'] = new_names
+#    split_ions = [ion_name.split() for ion_name in ion_list]
+#    new_names = [split_ion[0].lower() + '_' +
+#                 str(roman.fromRoman(split_ion[1][:-1]))
+#                 if ']' in split_ion[1] else split_ion[0].lower() + '_'
+#                 + str(roman.fromRoman(split_ion[1]))
+#                 for split_ion in split_ions]
+#    old_table['Ion'] = new_names
     return old_table
 
 
@@ -74,8 +74,14 @@ def generate_ion_gofnts(chianti_table, abundance=0.0, bin_width=1.0,
     for i in range(0, len(ion_list)):
         unique_ion = ion_list[i]
         ion_mask = np.where(chianti_table['Ion'] == unique_ion)
-        temp_ion = ch.ion(unique_ion, temperature=temp,
-                          eDensity=dens, abundance=abund_file)
+        
+        print(unique_ion)
+        try:
+            temp_ion = ch.ion(unique_ion, temperature=temp,
+                              eDensity=dens, abundance=abund_file)
+        except UnboundLocalError:
+            skip_ion=True
+
         try:
             temp_ion.intensity()
             skip_ion = False
@@ -264,8 +270,12 @@ def resample_gofnt_matrix(gofnt_old, wave_new, bin_new, wave_old):
     gofnt_new = np.zeros((len(wave_new), np.shape(gofnt_old)[1]))
     wave_highs = wave_new + (0.5 * bin_new)
     wave_lows = wave_new - (0.5 * bin_new)
+    print('len gofnt_old: ', len(gofnt_old))
     for i in range(len(wave_new)):
         wave_mask = np.where((wave_old <= wave_highs[i]) &
                              (wave_old > wave_lows[i]))
-        gofnt_new[i] += (np.sum((gofnt_old[wave_mask[0], :]), axis=0))
+        try:
+            gofnt_new[i] += (np.sum((gofnt_old[wave_mask[0], :]), axis=0))
+        except IndexError:
+            pass
     return gofnt_new

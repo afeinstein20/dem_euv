@@ -6,14 +6,15 @@ import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.table import Table
 
-from .resample import bintoR
-from .data_prep import generate_constant_bin_wave_arr
-from .data_prep import generate_spectrum_from_samples
-from .gofnt_routines import parse_ascii_table_CHIANTI, resample_gofnt_matrix
-from .gofnt_routines import generate_ion_gofnts
-from .fitting import fit_emcee, ln_likelihood_dem
-from .dem_plots import plot_dem, plot_spectrum, display_fig
+from resample import bintoR
+from data_prep import generate_constant_bin_wave_arr, generate_constant_R_wave_arr
+from data_prep import generate_spectrum_from_samples
+from gofnt_routines import parse_ascii_table_CHIANTI, resample_gofnt_matrix
+from gofnt_routines import generate_ion_gofnts
+from fitting import fit_emcee, ln_likelihood_dem
+from dem_plots import plot_dem, plot_spectrum, display_fig
 
+OUTPUT_DIR = './flare/'
 
 __all__ = ['generate_flux_weighting', 'get_best_gofnt_matrix_press',
            'get_line_data_gofnts', 'get_spectrum_data_gofnt',
@@ -21,43 +22,50 @@ __all__ = ['generate_flux_weighting', 'get_best_gofnt_matrix_press',
            'generate_spectrum_data_npy']
 
 
-def generate_flux_weighting(star_name, star_dist, star_rad):
+def generate_flux_weighting(star_name, star_dist, star_rad, suffix='_q'):
     flux_weighting = ((np.pi * u.sr * (star_rad**2.0) *
                        (1.0 / (star_dist**2.0))).to(u.sr)).value
-    np.save('flux_weighting_' + star_name, [flux_weighting])
+    np.save('flux_weighting_' + star_name + suffix, [flux_weighting])
     return flux_weighting
 
 
-def get_best_gofnt_matrix_press(abundance, press, abund_type):
-    gofnt_dir = '../gofnt_dir/'
+def get_best_gofnt_matrix_press(abundance, press, abund_type=15,
+                                gofnt_dir = '../gofnt_dir/'):
     gofnt_root = 'gofnt_w1_w2000_t4_t8_n100_p'
-    gofnt_matrix = np.load(gofnt_dir + gofnt_root
-                           + str(int(np.log10(press)))
-                           + '_' + abund_type + '.npy')
+#    print(str(int(np.log10(press))))
+#    gofnt_matrix = np.load(gofnt_dir + gofnt_root
+#                           + str(int(np.log10(press)))
+#                           + '_' + str(abund_type) + '.npy')
+
+    gofnt_matrix = np.load(os.path.join(gofnt_dir, 'gofnt_w1_w1500_t4_t8_n100_r100_p17_sol0.npy'))
     gofnt_matrix *= 10.0**abundance
     return gofnt_matrix
 
 
 def get_line_data_gofnts(star_name, line_table_file, abundance,
-                         temp, dens, bin_width):
+                         temp, dens, bin_width, suffix):
+    global OUTPUT_DIR
     line_table = parse_ascii_table_CHIANTI(line_table_file)
     gofnt_lines, flux, err, names = generate_ion_gofnts(line_table,
                                                         abundance,
                                                         bin_width,
                                                         temp,
                                                         dens)
-    np.save('gofnt_lines_' + star_name + '.npy', gofnt_lines)
-    np.save('ion_fluxes_' + star_name + '.npy', flux)
-    np.save('ion_errs_' + star_name + '.npy', err)
-    np.save('ion_names_' + star_name + '.npy', names)
+    np.save(OUTPUT_DIR+'gofnt_lines_' + star_name + suffix + '.npy', gofnt_lines)
+    np.save(OUTPUT_DIR+'ion_fluxes_' + star_name + suffix + '.npy', flux)
+    np.save(OUTPUT_DIR+'ion_errs_' + star_name + suffix + '.npy', err)
+    np.save(OUTPUT_DIR+'ion_names_' + star_name + suffix + '.npy', names)
     return gofnt_lines, flux, err, names
 
 
-def get_spectrum_data_gofnt(star_name, data_npy_file, gofnt_matrix):
+def get_spectrum_data_gofnt(star_name, data_npy_file, gofnt_matrix, suffix):
+    global OUTPUT_DIR
+
     wave, wave_bins, flux, err = np.load(data_npy_file, allow_pickle=True)
     flux *= wave_bins
     err *= wave_bins
     wave_old, _ = generate_constant_R_wave_arr(1, 1500, 150)
+
     gofnt_spectrum = resample_gofnt_matrix(gofnt_matrix, wave, wave_bins,
                                            wave_old)
     temp = np.logspace(4, 8, 100)
@@ -65,75 +73,79 @@ def get_spectrum_data_gofnt(star_name, data_npy_file, gofnt_matrix):
     mask = np.where(gofnt_ints >=
                     (np.max(gofnt_ints) / 10))
     print(len(mask[0]))
-    np.save('gofnt_spectrum_' + star_name + '.npy', gofnt_spectrum[mask[0], :])
-    np.save('spectrum_fluxes_' + star_name + '.npy', flux[mask])
-    np.save('spectrum_errs_' + star_name + '.npy', err[mask])
-    np.save('spectrum_waves_' + star_name + '.npy', wave[mask])
-    np.save('spectrum_bins_' + star_name + '.npy', wave_bins[mask])
+    np.save(OUTPUT_DIR+'gofnt_spectrum_' + star_name + suffix+ '.npy', gofnt_spectrum[mask[0], :])
+    np.save(OUTPUT_DIR+'spectrum_fluxes_' + star_name + suffix+ '.npy', flux[mask])
+    np.save(OUTPUT_DIR+'spectrum_errs_' + star_name +suffix+ '.npy', err[mask])
+    np.save(OUTPUT_DIR+'spectrum_waves_' + star_name +suffix+ '.npy', wave[mask])
+    np.save(OUTPUT_DIR+'spectrum_bins_' + star_name +suffix+'.npy', wave_bins[mask])
     return gofnt_spectrum, flux, err
 
 
-def get_star_data_gofnt_press(star_name, abundance, press,
-                              line_table_file=None, data_npy_file=None,
-                              bin_width=1.0):
-    big_gofnt = get_best_gofnt_matrix_press(abundance, press)
+def get_star_data_gofnt_press(star_name, abundance, press, 
+                              line_table_file=None, data_npy_file=None,suffix='_q',
+                              bin_width=1.0, abund_type=15, gofnt_dir='../gofnt_dir/'):
+    global OUTPUT_DIR
+    print('get_star_data: ', gofnt_dir)
+    big_gofnt = get_best_gofnt_matrix_press(abundance, press, abund_type, gofnt_dir)
     temp = np.logspace(4, 8, 100)
     dens = press / temp
+
     if line_table_file is not None:
-        if os.path.isfile('gofnt_lines_' + star_name + '.npy'):
-            gofnt_lines = np.load('gofnt_lines_' + star_name + '.npy')
-            flux = np.load('ion_fluxes_' + star_name + '.npy')
-            err = np.load('ion_errs_' + star_name + '.npy')
+        if os.path.isfile(OUTPUT_DIR+'gofnt_lines_' + star_name+ suffix+'.npy'):
+            gofnt_lines = np.load(OUTPUT_DIR+'gofnt_lines_' + star_name+suffix+ '.npy')
+            flux = np.load(OUTPUT_DIR+'ion_fluxes_' + star_name+suffix+ '.npy')
+            err = np.load(OUTPUT_DIR+'ion_errs_' + star_name +suffix+ '.npy')
         else:
             gofnt_lines, flux, err, _ = get_line_data_gofnts(star_name,
                                                              line_table_file,
                                                              abundance,
                                                              temp, dens,
-                                                             bin_width)
+                                                             bin_width, suffix=suffix)
         line_flux = flux
         line_err = err
     else:
         gofnt_lines = None
     if data_npy_file is not None:
-        if os.path.isfile('gofnt_spectrum_' + star_name + '.npy'):
-            gofnt_spectrum = np.load('gofnt_spectrum_' + star_name + '.npy')
-            flux = np.load('spectrum_fluxes_' + star_name + '.npy')
-            err = np.load('spectrum_errs_' + star_name + '.npy')
+        if os.path.isfile(OUTPUT_DIR+'gofnt_spectrum_' + star_name + suffix+'.npy'):
+            gofnt_spectrum = np.load(OUTPUT_DIR+'gofnt_spectrum_' + star_name + suffix+'.npy')
+            flux = np.load(OUTPUT_DIR+'spectrum_fluxes_' + star_name+suffix +'.npy')
+            err = np.load(OUTPUT_DIR+'spectrum_errs_' + star_name+suffix +'.npy')
         else:
             gofnt_spectrum, flux, err = get_spectrum_data_gofnt(star_name,
                                                                 data_npy_file,
-                                                                big_gofnt)
+                                                                big_gofnt, suffix=suffix)
         spectrum_flux = flux
         spectrum_err = err
     else:
         gofnt_spectrum = None
+
     if (gofnt_lines is None):
         if (gofnt_spectrum is None):
             print('Where is this star\'s data to do anything with?')
         else:
             gofnt_matrix = gofnt_spectrum
-            np.save('gofnt_' + star_name + '.npy', gofnt_matrix)
-            np.save('flux_' + star_name + '.npy', flux)
-            np.save('err_' + star_name + '.npy', err)
+            np.save(OUTPUT_DIR+'gofnt_' + star_name + suffix +'.npy', gofnt_matrix)
+            np.save(OUTPUT_DIR+'flux_' + star_name + suffix + '.npy', flux)
+            np.save(OUTPUT_DIR+'err_' + star_name + suffix + '.npy', err)
     elif (gofnt_spectrum is None):
         gofnt_matrix = gofnt_lines
-        np.save('gofnt_' + star_name + '.npy', gofnt_matrix)
-        np.save('flux_' + star_name + '.npy', flux)
-        np.save('err_' + star_name + '.npy', err)
+        np.save(OUTPUT_DIR+'gofnt_' + star_name +suffix + '.npy', gofnt_matrix)
+        np.save(OUTPUT_DIR+'flux_' + star_name + suffix +'.npy', flux)
+        np.save(OUTPUT_DIR+'err_' + star_name +  suffix +'.npy', err)
     else:
         gofnt_matrix = np.append(gofnt_spectrum, gofnt_lines, axis=0)
         flux = np.append(spectrum_flux, line_flux)
         err = np.append(spectrum_err, line_err)
-        np.save('gofnt_' + star_name + '.npy', gofnt_matrix)
-        np.save('flux_' + star_name + '.npy', flux)
-        np.save('err_' + star_name + '.npy', err)
+        np.save(OUTPUT_DIR+'gofnt_' + star_name +suffix + '.npy', gofnt_matrix)
+        np.save(OUTPUT_DIR+'flux_' + star_name + suffix + '.npy', flux)
+        np.save(OUTPUT_DIR+'err_' + star_name +suffix + '.npy', err)
     return gofnt_matrix, flux, err
 
 
 def run_mcmc_single_star(init_pos, gofnt_matrix, flux, err, flux_weighting,
                          n_walkers=200, burn_in_steps=1000,
                          production_steps=8000, thread_num=8,
-                         count_num=2000):
+                         count_num=2000, suffix='_q'):
     temp = np.logspace(4, 8, 100)
     log_temp = np.log10(temp)
     samples, lnprob, sampler = fit_emcee(init_pos=init_pos,
@@ -149,12 +161,12 @@ def run_mcmc_single_star(init_pos, gofnt_matrix, flux, err, flux_weighting,
                                          production_steps=production_steps,
                                          thread_num=thread_num,
                                          count_num=count_num)
-    np.save('samples_' + star_name, samples)
-    np.save('lnprob_' + star_name, lnprob)
+    np.save(OUTPUT_DIR+'samples_' + star_name +suffix, samples)
+    np.save(OUTPUT_DIR+'lnprob_' + star_name +suffix, lnprob)
     return samples, lnprob, sampler
 
 
-def generate_spectrum_data_npy():
+def generate_spectrum_data_npy(suffix='_q'):
     xray_fits = fits.open('../data_rsync/au_mic_data/au_mic_mos.ftz')
     arf_fits = fits.open('../data_rsync/au_mic_data/au_mic_mos_arf.ftz')
 
@@ -214,7 +226,7 @@ def generate_spectrum_data_npy():
     xray_wave = xray_wave[xray_mask]
     xray_bins = np.diff(xray_wave)
     xray_bins = np.append(xray_bins[0], xray_bins)
-    np.save('spectrum_data.npy',
+    np.save('spectrum_data{}.npy'.format(suffix),
             [xray_wave, xray_bins,
              xray_flux, xray_err])
     return 'spectrum_data.npy'
@@ -223,6 +235,7 @@ def generate_spectrum_data_npy():
 if __name__ == '__main__':
     temp = np.logspace(4, 8, 100)
     log_temp = np.log10(temp)
+    abund_type=15
     star_name_root = 'au_mic'
     abundance = 0.0
     star_rad = 0.75 * u.Rsun
@@ -235,36 +248,50 @@ if __name__ == '__main__':
     press_list = [1e17, 1e25, 1e24, 1e23, 1e22, 1e21, 1e20, 1e19, 1e18,
                   1e16, 1e15, 1e12, 1e13, 1e14]
 
-    if os.path.isfile('spectrum_data.npy'):
-        data_npy_file = 'spectrum_data.npy'
+    gofnt_dir = '/Users/arcticfox/Documents/AUMic/DEM/gofnt_dir'
+
+    suffix = '_f'
+
+    print('spectrum_data{}.npy'.format(suffix))
+    if os.path.isfile(os.path.join(OUTPUT_DIR, 'spectrum_data{}.npy'.format(suffix))):
+        data_npy_file = os.path.join(OUTPUT_DIR, 'spectrum_data{}.npy'.format(suffix))
     else:
         data_npy_file = generate_spectrum_data_npy()
-    line_table_file = 'au_mic_linetable.ascii'
+        
+    line_table_file = 'au_mic{0}_linetable.ascii'.format(suffix)
+        
     for press in press_list:
         star_name = star_name_root + '_p' + str(int(np.log10(press)))
-        gofnt_all = get_best_gofnt_matrix_press(abundance, press)
+        gofnt_all = get_best_gofnt_matrix_press(abundance, press,
+                                                    gofnt_dir=gofnt_dir)
         wave_all, bin_all = generate_constant_R_wave_arr(1, 1500, 100)
-        if os.path.isfile('gofnt_' + star_name + '.npy'):
-            gofnt_matrix = np.load('gofnt_' + star_name + '.npy')
-            flux = np.load('flux_' + star_name + '.npy')
-            err = np.load('err_' + star_name + '.npy')
+        
+        if os.path.isfile(os.path.join(gofnt_dir, 'gofnt_' + star_name + suffix+'.npy')):
+            gofnt_matrix = np.load(OUTPUT_DIR+'gofnt_' + star_name +suffix+ '.npy')
+            flux = np.load(OUTPUT_DIR+'flux_' + star_name +suffix+ '.npy')
+            err = np.load(OUTPUT_DIR+'err_' + star_name +suffix+ '.npy')
+            
         else:
+            print('main: ', gofnt_dir)
             out = get_star_data_gofnt_press(star_name,
                                             abundance,
-                                            press,
+                                        press,
                                             line_table_file,
-                                            data_npy_file)
+                                            data_npy_file,
+                                            abund_type=abund_type,
+                                            gofnt_dir=gofnt_dir, suffix=suffix)
             gofnt_matrix, flux, err = out
-        if os.path.isfile('samples_' + star_name + '.npy'):
-            samples = np.load('samples_' + star_name + '.npy')
-            lnprob = np.load('lnprob_' + star_name + '.npy')
+            
+        if os.path.isfile(OUTPUT_DIR+'samples_' + star_name + suffix + '.npy'):
+            samples = np.load(OUTPUT_DIR+'samples_' + star_name +suffix+ '.npy')
+            lnprob = np.load(OUTPUT_DIR+'lnprob_' + star_name +suffix+ '.npy')
         else:
             samples, lnprob, _ = run_mcmc_single_star(init_pos,
                                                       gofnt_matrix,
                                                       flux, err,
-                                                      flux_weighting)
-
-        if os.path.isfile('dem_' + star_name + '.pdf'):
+                                                      flux_weighting, suffix=suffix)
+            
+        if os.path.isfile(OUTPUT_DIR+'dem_' + star_name + suffix + '.pdf'):
             pass
         else:
             g = plot_dem(samples[:, :-1], lnprob, flux, gofnt_matrix,
@@ -272,22 +299,22 @@ if __name__ == '__main__':
                          'b', 'cornflowerblue', 0.1, 500,
                          'MCMC Samples', 'Best-fit DEM model',
                          r'$\Psi(T)$')
-            g = display_fig(g, 'dem_' + star_name, mode='pdf')
+            g = display_fig(g, 'dem_' + star_name + suffix, mode='pdf')
             plt.clf()
-
-        if os.path.isfile('corner_' + star_name + '.pdf'):
+            
+        if os.path.isfile('corner_' + star_name + suffix + '.pdf'):
             pass
         else:
             h = corner.corner(samples, quantiles=[0.16, 0.5, 0.84],
                               show_titles=True, title_kwargs={"fontsize": 12},
                               plot_contours=True)
-            h = display_fig(h, 'corner_' + star_name, mode='pdf')
+            h = display_fig(h, 'corner_' + star_name + suffix, mode='pdf')
             plt.clf()
-        if os.path.isfile('spectrum_' + star_name + '.fits'):
-            spectrum_table = Table.read('spectrum_' + star_name + '.fits')
-
+        if os.path.isfile(OUTPUT_DIR+'spectrum_' + star_name + suffix + '.fits'):
+            spectrum_table = Table.read(OUTPUT_DIR+'spectrum_' + star_name + suffix + '.fits')
+            
         else:
-            spectrum_name = 'spectrum_' + star_name
+            spectrum_name = OUTPUT_DIR + 'spectrum_' + star_name + suffix
             spectrum_table, _ = generate_spectrum_from_samples(spectrum_name,
                                                                samples,
                                                                lnprob,
@@ -295,10 +322,10 @@ if __name__ == '__main__':
                                                                flux_weighting,
                                                                wave_all,
                                                                bin_all)
-        if os.path.isfile('spectrum_' + star_name + '.pdf'):
+        if os.path.isfile(OUTPUT_DIR+'spectrum_' + star_name + suffix + '.pdf'):
             pass
         else:
-            spec_fig = plot_spectrum('spectrum_' + star_name + '.fits')
+            spec_fig = plot_spectrum(OUTPUT_DIR+'spectrum_' + star_name + '.fits')
             spec_fig = display_fig(spec_fig, 'spectrum_' + star_name,
                                    'DEM Output Spectrum',
                                    mode='pdf')
